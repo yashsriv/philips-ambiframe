@@ -61,8 +61,8 @@ class JointSpaceClient(
     secure: Boolean = true,
     credentials: JointSpaceCredentials? = null,
     certificateFingerprint: String? = null,
-    private val httpPort: Int = DEFAULT_HTTP_PORT,
-    private val httpsPort: Int = DEFAULT_HTTPS_PORT,
+    val httpPort: Int = DEFAULT_HTTP_PORT,
+    val httpsPort: Int = DEFAULT_HTTPS_PORT,
     baseClient: OkHttpClient = sharedBaseClient,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {

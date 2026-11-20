@@ -3,49 +3,27 @@ package com.ambiframe.tv.setup
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Surface
-import androidx.tv.material3.Text
 import androidx.tv.material3.darkColorScheme
 
 /**
- * Launcher entry point. Hosts the setup flow: pairing with the TV's
- * JointSpace API and screensaver settings. Pairing UI lands in a later step.
+ * Launcher entry point. Hosts the setup flow: finding the TV's JointSpace API, pairing with a
+ * PIN and testing Ambilight control.
  */
 class SetupActivity : ComponentActivity() {
+
+    private val viewModel: SetupViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                SetupScreen()
+                val state by viewModel.state.collectAsState()
+                SetupScreen(state, viewModel)
             }
-        }
-    }
-}
-
-@Composable
-private fun SetupScreen() {
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.padding(horizontal = 58.dp, vertical = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text("AmbiFrame", style = MaterialTheme.typography.displaySmall)
-            Text(
-                "Fine-art screensaver that turns Ambilight off while it runs.",
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Text(
-                "Ambilight pairing setup is coming in the next step.",
-                style = MaterialTheme.typography.bodyMedium,
-            )
         }
     }
 }
