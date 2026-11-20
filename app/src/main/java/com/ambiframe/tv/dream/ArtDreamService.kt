@@ -22,8 +22,8 @@ import kotlinx.coroutines.launch
 /**
  * The screensaver: a full-screen fine-art slideshow.
  *
- * It is not interactive, so any remote key dismisses it. Ambilight is switched off and restored
- * around [onDreamingStarted]/[onDreamingStopped] in step 7.
+ * It is not interactive, so any remote key dismisses it. [AmbilightGuard] switches Ambilight off
+ * when it starts and restores the previous style when it stops.
  */
 class ArtDreamService : DreamService() {
     private val owner = DreamLifecycleOwner()
@@ -55,6 +55,7 @@ class ArtDreamService : DreamService() {
 
     override fun onDreamingStarted() {
         super.onDreamingStarted()
+        AmbilightGuard.get(this).dreamStarted()
         val module = ArtModule.get(this)
         val settings = DreamSettings(this)
         val scope = owner.lifecycle.coroutineScope
@@ -70,13 +71,16 @@ class ArtDreamService : DreamService() {
     }
 
     override fun onDreamingStopped() {
+        AmbilightGuard.get(this).dreamStopped()
         loop?.cancel()
         loop = null
         owner.stop()
         super.onDreamingStopped()
     }
 
+    /** Some exits skip [onDreamingStopped]; the guard ignores the second call when both run. */
     override fun onDetachedFromWindow() {
+        AmbilightGuard.get(this).dreamStopped()
         loop?.cancel()
         loop = null
         owner.stop()

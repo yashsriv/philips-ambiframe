@@ -6,6 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.lifecycleScope
+import com.ambiframe.tv.dream.AmbilightGuard
+import kotlinx.coroutines.launch
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.darkColorScheme
 
@@ -19,6 +22,9 @@ class SetupActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // If an earlier screensaver couldn't restore Ambilight, try again now.
+        val guard = AmbilightGuard.get(this)
+        lifecycleScope.launch { guard.restorePending() }
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 val state by viewModel.state.collectAsState()
