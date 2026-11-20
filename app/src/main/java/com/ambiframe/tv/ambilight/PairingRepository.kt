@@ -28,13 +28,14 @@ data class PairedTv(
     val certificateFingerprint: String?,
     val tvName: String?,
 ) {
-    fun client(): JointSpaceClient = JointSpaceClient(
+    fun client(logger: JointSpaceLogger = JointSpaceLogger.NONE): JointSpaceClient = JointSpaceClient(
         host = host,
         secure = secure,
         credentials = credentials,
         certificateFingerprint = certificateFingerprint,
         httpPort = if (secure) JointSpaceClient.DEFAULT_HTTP_PORT else port,
         httpsPort = if (secure) port else JointSpaceClient.DEFAULT_HTTPS_PORT,
+        logger = logger,
     )
 }
 

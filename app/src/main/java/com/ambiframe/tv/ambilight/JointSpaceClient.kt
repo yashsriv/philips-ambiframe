@@ -13,6 +13,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import okhttp3.Authenticator
 import okhttp3.ConnectionSpec
 import okhttp3.HttpUrl
+import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -65,6 +66,7 @@ class JointSpaceClient(
     val httpsPort: Int = DEFAULT_HTTPS_PORT,
     baseClient: OkHttpClient = sharedBaseClient,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val logger: JointSpaceLogger = JointSpaceLogger.NONE,
 ) {
     /** True for HTTPS on [httpsPort] with Digest auth, false for plain HTTP on [httpPort]. */
     @Volatile
@@ -94,7 +96,11 @@ class JointSpaceClient(
         .connectionSpecs(listOf(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT))
         .authenticator(digestAuthenticator())
         .addInterceptor(AuthenticationCacheInterceptor(authCache))
+        .addNetworkInterceptor(wireLogger())
         .build()
+
+    @Volatile
+    private var loggedHandshake = false
 
     /**
      * `GET http://host:1925/6/system`, falling back to `https://host:1926/6/system` for
@@ -104,13 +110,20 @@ class JointSpaceClient(
         val (info, viaHttps) = try {
             getJson<SystemInfo>(url(secure = false, path = "system"), authenticated = false) to false
         } catch (plain: JointSpaceException.Unreachable) {
+            logger.log("system: port $httpPort unreachable, trying HTTPS on $httpsPort")
             try {
                 getJson<SystemInfo>(url(secure = true, path = "system"), authenticated = false) to true
-            } catch (_: JointSpaceException) {
+            } catch (e: JointSpaceException) {
+                logger.log("system: HTTPS on $httpsPort also failed: ${e.describeChain()}")
                 throw plain
             }
         }
         secure = viaHttps || info.requiresDigestPairing
+        val api = info.apiVersion?.let { "${it.major}.${it.minor}.${it.patch}" }
+        logger.log(
+            "system: host=$host name=${info.name} api=$api " +
+                "pairing_type=${info.featuring?.systemFeatures?.pairingType} viaHttps=$viaHttps -> secure=$secure",
+        )
         return info
     }
 
@@ -124,6 +137,11 @@ class JointSpaceClient(
         val response = decode<PairRequestResponse>(text)
         val authKey = response.authKey
         val timestamp = response.timestamp
+        logger.log(
+            "pair/request: error_id=${response.errorId} timeout=${response.timeout} " +
+                "timestamp=$timestamp (${if (timestamp?.isString == true) "string" else "number"}) " +
+                "auth_key length=${authKey?.length} device_id=${device.id}",
+        )
         if (response.errorId != SUCCESS || authKey.isNullOrEmpty() || timestamp == null) {
             throw JointSpaceException.PairingRejected(response.errorId, response.errorText)
         }
@@ -149,11 +167,16 @@ class JointSpaceClient(
                 ),
                 device = session.device,
             )
+            logger.log(
+                "pair/grant: trying signature variant ${variant.name} " +
+                    "(pin length=${trimmedPin.length}, auth_timestamp=${session.timestamp})",
+            )
             try {
                 val text = post(url(path = "pair/grant"), body.encode(), authenticated = true)
                 val errorId = decodeErrorId(text)
                 if (errorId == null || errorId == SUCCESS) {
                     pendingPairing = null
+                    logger.log("pair/grant: accepted signature variant ${variant.name}, cert=$certificateFingerprint")
                     return PairingResult(credentials!!, certificateFingerprint, variant.name)
                 }
                 lastFailure = JointSpaceException.PairingRejected(errorId, decodeOrNull<ErrorResponse>(text)?.errorText)
@@ -167,7 +190,9 @@ class JointSpaceClient(
             } catch (e: JointSpaceException.Unauthorized) {
                 lastFailure = e
             }
+            logger.log("pair/grant: variant ${variant.name} rejected: ${lastFailure?.message}")
         }
+        logger.log("pair/grant: all ${Signature.variants.size} signature variants rejected")
         setCredentials(null)
         throw lastFailure ?: JointSpaceException.BadResponse("Grant failed")
     }
@@ -219,14 +244,41 @@ class JointSpaceClient(
         } catch (e: JointSpaceException) {
             throw e
         } catch (e: SSLException) {
+            logger.log("${request.method} ${request.url} TLS failure: ${e.describeChain()}")
             val mismatch = e.causes().filterIsInstance<CertificateMismatchException>().firstOrNull()
             if (mismatch != null) {
                 throw JointSpaceException.CertificateChanged(mismatch.expected, mismatch.actual, e)
             }
             throw JointSpaceException.Unreachable(host, e)
         } catch (e: IOException) {
+            logger.log("${request.method} ${request.url} failed: ${e.describeChain()}")
             throw JointSpaceException.Unreachable(host, e)
         }
+    }
+
+    /**
+     * Logs every request as it goes on the wire, including the 401 Digest challenge round trip,
+     * plus the TLS version and cipher of the first HTTPS connection. Request bodies (PIN and
+     * signature) and Authorization headers are never logged.
+     */
+    private fun wireLogger() = Interceptor { chain ->
+        val request = chain.request()
+        val started = System.nanoTime()
+        val response = chain.proceed(request)
+        val elapsedMs = (System.nanoTime() - started) / 1_000_000
+        val handshake = chain.connection()?.handshake()
+        if (handshake != null && !loggedHandshake) {
+            loggedHandshake = true
+            logger.log(
+                "TLS ${handshake.tlsVersion.javaName} ${handshake.cipherSuite.javaName}, " +
+                    "pinned cert SHA-256=$certificateFingerprint",
+            )
+        }
+        val sentAuth = if (request.header("Authorization") != null) " [with digest auth]" else ""
+        val challenge = response.header("WWW-Authenticate")?.let { " challenge=$it" }.orEmpty()
+        val body = redactSecrets(response.peekBody(MAX_LOGGED_BODY).string()).replace('\n', ' ')
+        logger.log("${request.method} ${request.url} -> ${response.code} in ${elapsedMs}ms$sentAuth$challenge body=$body")
+        response
     }
 
     private fun readBody(response: Response): String {
@@ -242,6 +294,9 @@ class JointSpaceClient(
         val creds = credentials
         val wantsAuth = response.request.tag(AuthMode::class.java) == AuthMode.DIGEST
         if (creds == null || !wantsAuth || response.priorCount() >= MAX_AUTH_ATTEMPTS) {
+            if (wantsAuth) {
+                logger.log("digest: giving up on ${response.request.url} (credentials=${creds != null}, attempts=${response.priorCount()})")
+            }
             return@Authenticator null
         }
         val digest = DigestAuthenticator(Credentials(creds.deviceId, creds.authKey))
@@ -259,6 +314,7 @@ class JointSpaceClient(
         private const val POWER_ON = "On"
         private const val POWER_OFF = "Off"
         private const val MAX_AUTH_ATTEMPTS = 2
+        private const val MAX_LOGGED_BODY = 2_000L
         private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
         private const val DEVICE_ID_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
         private val random = SecureRandom()

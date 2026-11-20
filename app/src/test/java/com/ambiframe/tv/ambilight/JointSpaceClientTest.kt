@@ -51,6 +51,7 @@ class JointSpaceClientTest {
     private fun client(
         credentials: JointSpaceCredentials? = null,
         fingerprint: String? = null,
+        logger: JointSpaceLogger = JointSpaceLogger.NONE,
     ) = JointSpaceClient(
         host = "127.0.0.1",
         secure = true,
@@ -58,7 +59,37 @@ class JointSpaceClientTest {
         certificateFingerprint = fingerprint,
         httpsPort = server.port,
         httpPort = server.port,
+        logger = logger,
     )
+
+    @Test
+    fun diagnosticsLogPairingWithoutSecrets() = runTest {
+        server.enqueue(json(pairResponse))
+        server.enqueue(digestChallenge())
+        server.enqueue(json("""{"error_id":"INVALID_PIN"}""").setResponseCode(400))
+        server.enqueue(json("""{"error_id":"SUCCESS"}"""))
+        val lines = java.util.Collections.synchronizedList(mutableListOf<String>())
+        val client = client(logger = JointSpaceLogger { lines += it })
+
+        client.pairRequest()
+        client.pairGrant("9876")
+
+        val log = lines.joinToString("\n")
+        assertTrue(log, log.contains("/6/pair/request -> 200"))
+        assertTrue(log, log.contains("timestamp=73120 (number)"))
+        assertTrue(log, log.contains("""challenge=Digest realm="XTV""""))
+        assertTrue(log, log.contains("-> 400"))
+        assertTrue(log, log.contains("INVALID_PIN"))
+        assertTrue(log, log.contains("variant suborb rejected"))
+        assertTrue(log, log.contains("accepted signature variant suborb-wrapped"))
+        assertTrue(log, log.contains("TLS TLSv1."))
+        assertTrue(log, log.contains(tvFingerprint))
+        assertFalse("auth_key leaked:\n$log", log.contains("secretKey123"))
+        // Request bodies are never logged; fingerprints are random hex, so match the JSON key.
+        assertFalse("PIN leaked:\n$log", log.contains("\"pin\"") || log.contains("pin=9876"))
+        assertFalse("signature leaked:\n$log", log.contains(Signature.sign("73120", "9876")))
+        assertFalse("Authorization header leaked:\n$log", log.contains("response="))
+    }
 
     private fun digestChallenge() = MockResponse()
         .setResponseCode(401)

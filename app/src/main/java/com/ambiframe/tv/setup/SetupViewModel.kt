@@ -3,10 +3,13 @@ package com.ambiframe.tv.setup
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import android.os.Build
 import com.ambiframe.tv.ambilight.JointSpaceClient
+import com.ambiframe.tv.ambilight.LogcatLogger
 import com.ambiframe.tv.ambilight.PairedTv
 import com.ambiframe.tv.ambilight.PairingRepository
 import com.ambiframe.tv.ambilight.SystemInfo
+import com.ambiframe.tv.ambilight.describeChain
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
@@ -48,8 +51,10 @@ class SetupViewModel(application: Application) : AndroidViewModel(application), 
     private var job: Job? = null
 
     init {
+        log("setup started on ${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
         launchExclusive {
             val saved = repository.current()
+            log(if (saved != null) "stored pairing: host=${saved.host} secure=${saved.secure} port=${saved.port}" else "no stored pairing")
             if (saved != null) showPaired(saved, refresh = true) else detectNow()
         }
     }
@@ -62,9 +67,21 @@ class SetupViewModel(application: Application) : AndroidViewModel(application), 
         _state.update {
             it.copy(step = SetupStep.Detecting, status = "Looking for the TV's Ambilight API…", error = null)
         }
-        for (host in candidateHosts(getApplication())) {
+        val hosts = candidateHosts(getApplication())
+        log("detect: candidates=$hosts")
+        for (host in hosts) {
             _state.update { it.copy(status = "Trying $host…") }
-            val found = runCatching { probe(host) }.getOrNull()
+            val found = try {
+                probe(host)
+            } catch (e: TimeoutCancellationException) {
+                log("detect: $host timed out after ${PROBE_TIMEOUT_MS}ms")
+                null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log("detect: $host failed: ${e.describeChain()}")
+                null
+            }
             if (found != null) {
                 onFound(found.first, found.second)
                 return
@@ -108,7 +125,7 @@ class SetupViewModel(application: Application) : AndroidViewModel(application), 
     }
 
     private suspend fun probe(host: String): Pair<JointSpaceClient, SystemInfo> {
-        val candidate = JointSpaceClient(host, secure = false)
+        val candidate = JointSpaceClient(host, secure = false, logger = LogcatLogger)
         val info = withTimeout(PROBE_TIMEOUT_MS) { candidate.system() }
         return candidate to info
     }
@@ -203,7 +220,7 @@ class SetupViewModel(application: Application) : AndroidViewModel(application), 
 
     private suspend fun showPaired(tv: PairedTv, refresh: Boolean) {
         pairedTv = tv
-        client = tv.client()
+        client = tv.client(LogcatLogger)
         _state.update {
             it.copy(
                 step = SetupStep.Paired,
@@ -288,13 +305,17 @@ class SetupViewModel(application: Application) : AndroidViewModel(application), 
         try {
             block()
         } catch (e: TimeoutCancellationException) {
+            log("error (host=$host): timed out")
             _state.update { it.copy(error = plainLanguage(e, host)) }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
+            log("error (host=$host): ${e.describeChain()}")
             _state.update { it.copy(error = plainLanguage(e, host)) }
         }
     }
+
+    private fun log(message: String) = LogcatLogger.log("setup: $message")
 
     /** One network action at a time; presses while busy are ignored. */
     private fun launchExclusive(block: suspend () -> Unit) {
