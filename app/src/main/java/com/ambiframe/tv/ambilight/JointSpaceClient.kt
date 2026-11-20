@@ -103,19 +103,36 @@ class JointSpaceClient(
     private var loggedHandshake = false
 
     /**
-     * `GET http://host:1925/6/system`, falling back to `https://host:1926/6/system` for
-     * firmwares that closed 1925. Sets [secure] from the TV's `pairing_type`.
+     * `GET http://host:1925/6/system`, falling back to `https://host:1926/6/system` when 1925 is
+     * closed or gives no usable answer. Some firmwares (seen on a 2022 OLED707, API 6.1) answer
+     * 1925 with `200 OK` and an empty body and only serve the real data on 1926.
+     * Sets [secure] from the TV's `pairing_type`.
      */
     suspend fun system(): SystemInfo {
-        val (info, viaHttps) = try {
-            getJson<SystemInfo>(url(secure = false, path = "system"), authenticated = false) to false
-        } catch (plain: JointSpaceException.Unreachable) {
-            logger.log("system: port $httpPort unreachable, trying HTTPS on $httpsPort")
+        var plainError: JointSpaceException? = null
+        val plainInfo = try {
+            getJson<SystemInfo>(url(secure = false, path = "system"), authenticated = false)
+        } catch (e: JointSpaceException) {
+            plainError = e
+            null
+        }
+        val (info, viaHttps) = if (plainInfo?.featuring?.systemFeatures != null) {
+            plainInfo to false
+        } else {
+            val why = plainError?.describeChain() ?: "a reply without system features"
+            logger.log("system: port $httpPort gave $why; trying HTTPS on $httpsPort")
             try {
                 getJson<SystemInfo>(url(secure = true, path = "system"), authenticated = false) to true
             } catch (e: JointSpaceException) {
                 logger.log("system: HTTPS on $httpsPort also failed: ${e.describeChain()}")
-                throw plain
+                when {
+                    // 1925 gave something parseable, just sparse: use it.
+                    plainInfo != null -> plainInfo to false
+                    // Nothing listening anywhere: "can't reach the TV" is the useful message.
+                    plainError is JointSpaceException.Unreachable -> throw plainError
+                    // A TV answered 1925 oddly and 1926 failed: the 1926 error says more.
+                    else -> throw e
+                }
             }
         }
         secure = viaHttps || info.requiresDigestPairing

@@ -361,6 +361,48 @@ class JointSpaceSystemTest {
         assertTrue(client.secure)
     }
 
+    /** Reproduces a 65OLED707 (API 6.1): 1925 answers 200 with an empty body, 1926 has the data. */
+    @Test
+    fun emptyReplyOnPlainPortFallsBackToHttps() = runTest {
+        val certificate = HeldCertificate.Builder().commonName("restfultv.tpvision.com").build()
+        val https = MockWebServer()
+        https.useHttps(HandshakeCertificates.Builder().heldCertificate(certificate).build().sslSocketFactory(), false)
+        https.start(InetAddress.getByName("127.0.0.1"), 0)
+        try {
+            server.enqueue(
+                MockResponse().setResponseCode(200)
+                    .setHeader("Content-Type", "application/json; charset=UTF-8")
+                    .setHeader("Content-Length", "0"),
+            )
+            https.enqueue(MockResponse().setBody(systemJson.format("digest_auth_pairing")))
+            server.start(InetAddress.getByName("127.0.0.1"), 0)
+            val client = JointSpaceClient("127.0.0.1", secure = false, httpPort = server.port, httpsPort = https.port)
+
+            val info = client.system()
+
+            assertEquals("/6/system", server.takeRequest().path)
+            assertEquals("/6/system", https.takeRequest().path)
+            assertEquals("65OLED806/12", info.name)
+            assertTrue(client.secure)
+            assertEquals(PinnedCertificateTrustManager.sha256Fingerprint(certificate.certificate), client.certificateFingerprint)
+        } finally {
+            https.shutdown()
+        }
+    }
+
+    @Test
+    fun emptyReplyAndNoHttpsReportsTheHttpsFailure() = runTest {
+        server.enqueue(MockResponse().setResponseCode(200).setHeader("Content-Length", "0"))
+        server.start(InetAddress.getByName("127.0.0.1"), 0)
+        val closedPort = ServerSocket(0, 1, InetAddress.getByName("127.0.0.1")).use { it.localPort }
+        val client = JointSpaceClient("127.0.0.1", secure = false, httpPort = server.port, httpsPort = closedPort)
+        try {
+            client.system()
+            fail("expected a JointSpaceException")
+        } catch (_: JointSpaceException.Unreachable) {
+        }
+    }
+
     @Test
     fun systemWithoutDigestPairingStaysOnHttp() = runTest {
         server.enqueue(MockResponse().setBody(systemJson.format("none")))
