@@ -40,7 +40,7 @@ class GoogleArtsCultureProvider(
         } catch (e: IllegalArgumentException) { // SerializationException is a subclass.
             throw IOException("Arts & Culture feed is malformed", e)
         }
-        entries.mapNotNull { it.toArtwork() }.distinctBy { it.id }
+        entries.filterNot { it.isStreetArt() }.mapNotNull { it.toArtwork() }.distinctBy { it.id }
     }
 
     /** Aspect ratio is the same at every size, so probe a small rendition. */
@@ -57,6 +57,17 @@ class GoogleArtsCultureProvider(
         @SerialName("artist_link") val artistLink: String? = null,
         val source: String? = null,
     ) {
+        /**
+         * The feed mixes in photos of murals and graffiti from Google's Street Art Project. It has no
+         * category field, so they are recognised by partner, or by street-art words for partners
+         * added after [STREET_ART_PARTNERS] was compiled.
+         */
+        fun isStreetArt(): Boolean {
+            val partner = attributionLink?.trim()?.removePrefix("partner/")
+            if (partner in STREET_ART_PARTNERS) return true
+            return listOfNotNull(attribution, creator, title).any { STREET_ART_WORDS.containsMatchIn(it) }
+        }
+
         fun toArtwork(): Artwork? {
             val image = image?.trim()?.takeIf { it.startsWith("http") } ?: return null
             val key = link?.trim()?.substringAfterLast('/')?.takeIf { it.isNotEmpty() }
@@ -77,6 +88,30 @@ class GoogleArtsCultureProvider(
         const val FEED_URL = "https://www.gstatic.com/culturalinstitute/tabext/imax_2_2.json"
         const val DISPLAY_SUFFIX = "=w3840"
         const val PROBE_SUFFIX = "=s256"
+
+        /**
+         * `attribution_link` partner slugs whose works in the feed are street art. Compiled from the
+         * live feed on 2026-11-20 (13 of 349 works). Pera Museum is a regular museum, but its only
+         * work in the feed is a graffiti piece (Suiko's "Scorpion").
+         */
+        internal val STREET_ART_PARTNERS = setOf(
+            "do-art-foundation",
+            "dulwich-outdoor-gallery",
+            "east-side-gallery",
+            "emergence",
+            "galeria-de-arte-urbana",
+            "graffitimundo",
+            "museum-of-public-art-in-louisiana",
+            "pera-museum",
+            "south-austin-popular-culture-center",
+            "street-art-museum-amsterdam",
+            "the-red-line-d-c-project",
+            "wall-therapy",
+            "wool-festival",
+        )
+
+        /** Matches no fine-art work in the 2026-11-20 feed. */
+        internal val STREET_ART_WORDS = Regex("""street[\s-]?art|graffiti|urban art|arte urbana""", RegexOption.IGNORE_CASE)
 
         /** Drops any existing `=…` size suffix from a ggpht URL. */
         internal fun baseImageUrl(url: String): String {

@@ -13,6 +13,7 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
@@ -128,6 +129,40 @@ class GoogleArtsCultureProviderTest {
         )
         assertEquals("High Museum of Art", works[1].credit) // trailing space trimmed
         assertEquals(ArtSource.GOOGLE_ARTS_AND_CULTURE, poppies.source)
+    }
+
+    @Test
+    fun streetArtIsDropped() = runTest {
+        // The first entry is verbatim from the live feed: a photo of a mural, shown on the TV on 2026-11-20.
+        server.enqueue(
+            MockResponse().setBody(
+                """[
+                {"artist_link":"https://www.google.com/search?q=Stik","attribution":"Dulwich Outdoor Gallery",
+                 "attribution_link":"partner/dulwich-outdoor-gallery","creator":"Stik",
+                 "image":"https://lh3.ggpht.com/ci/STIK","link":"asset/VgEaQsPcGaXh0w",
+                 "title":"The Guardian Angel","source":"CI_TAB"},
+                {"attribution":"Some New Mural Festival","attribution_link":"partner/brand-new-partner",
+                 "creator":"street artist known as X","image":"https://lh3.ggpht.com/ci/NEW",
+                 "link":"asset/new","title":"Untitled"},
+                {"attribution":"Covilhã Urban Art Festival","attribution_link":"partner/another-new-partner",
+                 "creator":"Y","image":"https://lh3.ggpht.com/ci/URBAN","link":"asset/urban","title":"Untitled"},
+                {"attribution":"The J. Paul Getty Museum","attribution_link":"partner/the-j-paul-getty-museum",
+                 "creator":"William Turner of Oxford","image":"https://lh3.ggpht.com/ci/GETTY",
+                 "link":"asset/getty","title":"Stonehenge - Twilight"}
+                ]""",
+            ),
+        )
+
+        val works = provider().fetch()
+
+        assertEquals(listOf("gac:getty"), works.map { it.id })
+    }
+
+    @Test
+    fun streetArtWordsDoNotCatchFineArt() {
+        val fine = listOf("The Flowered Terrace", "Henri Edmond Cross", "The Museum of Fine Arts, Houston",
+            "Market in Piazza del Municipio", "Art Gallery of New South Wales", "Streets of Paris")
+        fine.forEach { assertFalse(it, GoogleArtsCultureProvider.STREET_ART_WORDS.containsMatchIn(it)) }
     }
 
     @Test
