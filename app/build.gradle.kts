@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -52,5 +53,13 @@ dependencies {
     implementation(libs.androidx.tv.material)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.digest)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.coroutines.android)
+
     testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.okhttp.tls)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

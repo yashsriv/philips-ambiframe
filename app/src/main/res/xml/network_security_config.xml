@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  JointSpace discovery (GET http://<tv>:1925/6/system) is plain HTTP to an IP address on the
+  local network, which can't be listed ahead of time in a domain-config. Cleartext is therefore
+  allowed in the base config. Pairing and Ambilight control go over HTTPS on 1926, pinned to the
+  TV's certificate by JointSpaceClient; art sources use HTTPS.
+-->
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <base-config
+        cleartextTrafficPermitted="true"
+        tools:ignore="InsecureBaseConfiguration">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
