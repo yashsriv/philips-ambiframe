@@ -1,20 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Placeholder icon: a picture frame with a glow. Replaced in the polish step. -->
+<!-- A framed landscape with an Ambilight-style glow; matches drawable-xhdpi/banner.png. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:fillColor="#1B1B2F"
+        android:fillColor="#14141F"
         android:pathData="M0,0h108v108h-108z" />
+    <!-- Glow -->
+    <path android:pathData="M54,54m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="54"
+                android:centerY="54"
+                android:gradientRadius="48"
+                android:type="radial">
+                <item android:color="#B3F09646" android:offset="0" />
+                <item android:color="#00F09646" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Gold frame -->
     <path
         android:fillColor="#E0A458"
-        android:pathData="M24,30h60v48h-60z" />
+        android:pathData="M26,34h56v40h-56z" />
+    <!-- Dusk sky -->
+    <path android:pathData="M30,38h48v32h-48z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:endX="0"
+                android:endY="70"
+                android:startX="0"
+                android:startY="38"
+                android:type="linear">
+                <item android:color="#FF2E4A62" android:offset="0" />
+                <item android:color="#FFDE966E" android:offset="1" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Sun -->
     <path
-        android:fillColor="#2E4A62"
-        android:pathData="M30,36h48v36h-48z" />
+        android:fillColor="#FADEA0"
+        android:pathData="M64,48m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <!-- Hills -->
     <path
-        android:fillColor="#F2D492"
-        android:pathData="M36,64l12,-14l9,10l7,-6l10,10z" />
+        android:fillColor="#3A5C4A"
+        android:pathData="M30,70v-9l13,-7l11,7l10,-4l14,7v6z" />
 </vector>

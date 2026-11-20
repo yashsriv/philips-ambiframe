@@ -4,19 +4,44 @@ An Android TV screensaver that shows fine art, built for Philips Ambilight TVs.
 When the screensaver starts, it turns Ambilight **off**. When it is dismissed,
 it restores Ambilight to the style it had before.
 
-See [SPEC.md](SPEC.md) for the original idea.
+See [SPEC.md](SPEC.md) for the original idea and [docs/PLAN.md](docs/PLAN.md)
+for how it was built.
 
 ## How it works
 
-- **Screensaver:** an Android `DreamService` that shows a full-screen slideshow
-  of landscape artworks. The attribution sits small in the bottom-right corner.
-- **Art sources:**
+- **Screensaver:** an Android `DreamService` (`dream/ArtDreamService`) that
+  shows a full-screen slideshow of landscape artworks. Each slide crossfades in
+  once fully loaded, a small credit line sits in the bottom-right corner, and
+  the picture drifts a few pixels over several minutes to protect OLED panels.
+  Any remote key ends it.
+- **Art sources** (`art/`):
   - [Art Institute of Chicago API](https://api.artic.edu/docs/): public-domain
-    Impressionism and Post-Impressionism works. This is the default.
-  - Google Arts & Culture feed: unofficial, off by default.
-- **Ambilight control:** the TV's JointSpace API (v6, `https://<tv>:1926/6/`,
-  HTTP Digest auth). The app pairs with the TV once, in its setup screen,
-  using a PIN shown on the TV.
+    Impressionism and Post-Impressionism works. On by default.
+  - Google Arts & Culture: an unofficial feed (the one behind Google's
+    new-tab browser extension). Off by default. Street-art photos in it are
+    filtered out. If it disappears, the app falls back to Chicago.
+  - Only landscape works (4:3 to 2:1) are shown, so they fill a 16:9 screen.
+- **Ambilight control** (`ambilight/`): the TV's JointSpace API
+  (v6, `https://127.0.0.1:1926/6/` from the TV itself, HTTP Digest auth).
+  The app pairs once, using a PIN the TV shows.
+- **Switching Ambilight** (`dream/AmbilightGuard`): when the screensaver
+  starts, the current Ambilight style is saved and Ambilight switched off.
+  When it ends, the saved style is posted back. If the TV doesn't answer, a
+  WorkManager job retries once the network is up, so Ambilight isn't left off.
+
+## Using it
+
+Open **AmbiFrame** from the TV's launcher. The settings screen has:
+
+- **Preview screensaver**: runs it now, Ambilight included.
+- **Time per picture**: 15 seconds to 30 minutes (default 1 minute).
+- **Show credits**: the title, artist and museum line.
+- **Google Arts & Culture**: adds the unofficial feed.
+- **Ambilight setup**: pair with the TV, test Ambilight off/on, or forget it.
+- **TV screensaver settings**: the system screen for choosing a screensaver.
+
+The left side shows whether the TV is paired and whether AmbiFrame is the
+active screensaver.
 
 ## Build
 
@@ -26,6 +51,7 @@ with platform 36.
 ```sh
 ./gradlew assembleDebug   # build the APK
 ./gradlew test            # run unit tests
+./gradlew lint            # Android lint
 ```
 
 ## Install and enable on the TV
@@ -33,9 +59,11 @@ with platform 36.
 1. Enable developer options and network debugging on the TV, then connect:
    `adb connect <tv-ip>`
 2. Install: `./gradlew installDebug`
-3. Open **AmbiFrame** from the launcher and pair with the TV.
-4. Make it the active screensaver. On Google TV and newer firmware,
-   third-party screensavers are hidden from Settings, so use adb:
+3. Open **AmbiFrame** from the launcher, choose **Ambilight setup** and pair
+   with the TV (enter the PIN it shows).
+4. Make it the active screensaver: pick it under Settings > Device Preferences >
+   Screen saver. If it isn't listed (Google TV and newer firmware hide
+   third-party screensavers), use adb:
 
    ```sh
    adb shell settings put secure screensaver_components com.ambiframe.tv/.dream.ArtDreamService
@@ -44,6 +72,12 @@ with platform 36.
 5. Start it right away to test it:
    `adb shell am start -n com.android.systemui/.Somnambulator`
 
-## Status
+## Troubleshooting
 
-Being built in steps; see [docs/PLAN.md](docs/PLAN.md). Done: step 1 (repo) and step 2 (Gradle + app skeleton).
+- **Pairing shows no PIN:** on some Philips TVs the PIN toast comes from
+  `org.droidtv.tvsystemui`. If that app isn't allowed to draw over other apps,
+  the PIN is invisible. Allow it, or read the PIN from `adb logcat`.
+- **Logs:** `adb logcat -s AmbiFrame AmbiFrameDream AmbiFrameArt`. The TV's log
+  buffer is small and busy, so stream it rather than reading it afterwards.
+- **Debug art preview** (debug builds only), with source stats on screen:
+  `adb shell am start -n com.ambiframe.tv/.art.debug.ArtPreviewActivity`
