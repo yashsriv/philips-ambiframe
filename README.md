@@ -1,5 +1,7 @@
 # AmbiFrame
 
+[![Build and test](https://github.com/yashsriv/philips-ambiframe/actions/workflows/build.yml/badge.svg)](https://github.com/yashsriv/philips-ambiframe/actions/workflows/build.yml)
+
 An Android TV screensaver that shows fine art, built for Philips Ambilight TVs.
 When the screensaver starts, it turns Ambilight **off**. When it is dismissed,
 it restores Ambilight to the style it had before.
