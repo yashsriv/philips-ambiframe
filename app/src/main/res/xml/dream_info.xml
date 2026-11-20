@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings for the screensaver open the app's setup screen (pairing and, later, preferences). -->
+<dream xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="com.ambiframe.tv/.setup.SetupActivity" />
