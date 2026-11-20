@@ -1,0 +1,75 @@
+{
+  "preference": null,
+  "pagination": {
+    "total": 7,
+    "limit": 4,
+    "offset": 0,
+    "total_pages": 2,
+    "current_page": 1
+  },
+  "data": [
+    {
+      "_score": 3533990.2,
+      "id": 28560,
+      "title": "The Bedroom",
+      "thumbnail": {
+        "width": 12614,
+        "height": 9875,
+        "alt_text": "Painting of bedroom, blue walls, green window, tan bed, red bedding."
+      },
+      "date_display": "1889",
+      "artist_display": "Vincent van Gogh (Dutch, 1853–1890)",
+      "credit_line": "Helen Birch Bartlett Memorial Collection",
+      "image_id": "6644829f-f292-c5c4-a73c-0356a6fdbf0d"
+    },
+    {
+      "_score": 56095.082,
+      "id": 64818,
+      "title": "Stacks of Wheat (End of Summer)",
+      "thumbnail": {
+        "width": 6884,
+        "height": 4068,
+        "alt_text": "Painting composed of short, dense brushstrokes depicts two domed stacks of wheat that cast long shadows on a field. The angled light indicates either a rising or setting sun."
+      },
+      "date_display": "1890–91",
+      "artist_display": "Claude Monet (French, 1840–1926)",
+      "credit_line": "Gift of Arthur M. Wood, Sr. in memory of Pauline Palmer Wood",
+      "image_id": "a38e2828-ec6f-ece1-a30f-70243449197b"
+    },
+    {
+      "_score": 588998.4,
+      "id": 20684,
+      "title": "Paris Street; Rainy Day",
+      "thumbnail": {
+        "width": 9987,
+        "height": 7755,
+        "alt_text": "Life-size painting of an urban scene in Paris. A man in a top hat holding an umbrella and a woman in a long fashionable dark dress walk arm in arm toward the viewer as other city dwellers with umbrellas walk in various directions across cobblestone roads and sidewalks."
+      },
+      "date_display": "1877",
+      "artist_display": "Gustave Caillebotte (French, 1848–1894)",
+      "credit_line": "Charles H. and Mary F. S. Worcester Collection",
+      "image_id": "f8fd76e9-c396-5678-36ed-6a348c904d27"
+    },
+    {
+      "_score": 16307.977,
+      "id": 25865,
+      "title": "The Herring Net",
+      "thumbnail": {
+        "width": 9953,
+        "height": 6124,
+        "alt_text": "Painting of two fishermen in small wooden boat on rocky seas."
+      },
+      "date_display": "1885",
+      "artist_display": "Winslow Homer (American, 1836–1910)",
+      "credit_line": "Mr. and Mrs. Martin A. Ryerson Collection",
+      "image_id": "5dca7347-c6dc-24dd-d073-d705b9cdc575"
+    }
+  ],
+  "info": {
+    "license_text": "The data in this response is licensed under a Creative Commons Zero (CC0) 1.0 designation and the Terms and Conditions of artic.edu."
+  },
+  "config": {
+    "iiif_url": "https://www.artic.edu/iiif/2",
+    "website_url": "https://www.artic.edu"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "preference": null,
+  "pagination": {
+    "total": 7,
+    "limit": 4,
+    "offset": 4,
+    "total_pages": 2,
+    "current_page": 2
+  },
+  "data": [
+    {
+      "_score": 15883.917,
+      "id": 61603,
+      "title": "Ballet at the Paris Opéra",
+      "thumbnail": {
+        "width": 8382,
+        "height": 4197,
+        "alt_text": "Color pastel drawing of ballerinas in tutus on stage, watched by audience."
+      },
+      "date_display": "1877",
+      "artist_display": "Edgar Degas\nFrench, 1834-1917",
+      "credit_line": "Gift of Mary and Leigh Block",
+      "image_id": "cb34b0a8-bc51-d063-aab1-47c7debf3a7b"
+    },
+    {
+      "_score": 18681.006,
+      "id": 16568,
+      "title": "Water Lilies",
+      "thumbnail": {
+        "width": 8808,
+        "height": 8460,
+        "alt_text": "Painting of a pond seen up close spotted with thickly painted pink and white water lilies and a shadow across the top third of the picture."
+      },
+      "date_display": "1906",
+      "artist_display": "Claude Monet (French, 1840–1926)",
+      "credit_line": "Mr. and Mrs. Martin A. Ryerson Collection",
+      "image_id": "3c27b499-af56-f0d5-93b5-a7f2f1ad5813"
+    },
+    {
+      "_score": 18234.184,
+      "id": 14655,
+      "title": "Two Sisters (On the Terrace)",
+      "thumbnail": {
+        "width": 19848,
+        "height": 24629,
+        "alt_text": "Impressionist painting of two girls on balcony, bright flower hat, knitting basket."
+      },
+      "date_display": "1881",
+      "artist_display": "Pierre-Auguste Renoir (French, 1841–1919)",
+      "credit_line": "Mr. and Mrs. Lewis Larned Coburn Memorial Collection",
+      "image_id": null
+    }
+  ],
+  "info": {
+    "license_text": "The data in this response is licensed under a Creative Commons Zero (CC0) 1.0 designation and the Terms and Conditions of artic.edu."
+  },
+  "config": {
+    "iiif_url": "https://www.artic.edu/iiif/2",
+    "website_url": "https://www.artic.edu"
+  }
+}

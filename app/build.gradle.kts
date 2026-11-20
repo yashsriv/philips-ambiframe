@@ -39,6 +39,11 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions {
+        // android.util.Log and friends return defaults instead of throwing in JVM tests.
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -58,6 +63,8 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)
