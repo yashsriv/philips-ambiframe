@@ -4,12 +4,16 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import android.os.Build
+import com.ambiframe.tv.ambilight.AmbilightConfiguration
+import com.ambiframe.tv.ambilight.AmbilightState
 import com.ambiframe.tv.ambilight.JointSpaceClient
 import com.ambiframe.tv.ambilight.LogcatLogger
 import com.ambiframe.tv.ambilight.PairedTv
 import com.ambiframe.tv.ambilight.PairingRepository
 import com.ambiframe.tv.ambilight.SystemInfo
 import com.ambiframe.tv.ambilight.describeChain
+import com.ambiframe.tv.ambilight.restoreAmbilight
+import com.ambiframe.tv.ambilight.switchOffKeepingStyle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
@@ -49,6 +53,9 @@ class SetupViewModel(application: Application) : AndroidViewModel(application), 
     private var client: JointSpaceClient? = null
     private var pairedTv: PairedTv? = null
     private var job: Job? = null
+
+    /** Ambilight as it was before "Test: Ambilight off", so "on" can bring the same style back. */
+    private var savedAmbilight: AmbilightState? = null
 
     init {
         log("setup started on ${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT})")
@@ -261,12 +268,39 @@ class SetupViewModel(application: Application) : AndroidViewModel(application), 
             it.copy(status = pairedSummary(tv, "Turning Ambilight ${if (on) "on" else "off"}…"), error = null)
         }
         runReporting(tv.host) {
-            c.setAmbilightPower(on)
-            _state.update {
-                it.copy(status = pairedSummary(tv, "Ambilight should now be ${if (on) "on" else "off"}."))
-            }
+            val detail = if (on) restoreForTest(c) else switchOffForTest(c)
+            _state.update { it.copy(status = pairedSummary(tv, detail)) }
         }
     }
+
+    private suspend fun switchOffForTest(c: JointSpaceClient): String {
+        val before = c.switchOffKeepingStyle()
+        log("test off: before=$before")
+        if (!before.on) return "Ambilight was already off."
+        // Keep the first saved style if "off" is pressed twice.
+        savedAmbilight = before
+        return "Ambilight should now be off. Its style (${styleLabel(before.configuration)}) is saved for \"on\"."
+    }
+
+    private suspend fun restoreForTest(c: JointSpaceClient): String {
+        val saved = savedAmbilight
+        if (saved != null) {
+            log("test on: restoring $saved")
+            c.restoreAmbilight(saved)
+            savedAmbilight = null
+            return "Ambilight should now be on, in its earlier style (${styleLabel(saved.configuration)})."
+        }
+        if (c.getAmbilightPower()) return "Ambilight is already on."
+        log("test on: no saved style, powering on")
+        c.setAmbilightPower(true)
+        return "Ambilight should now be on. No earlier style was saved, so the TV may use its default."
+    }
+
+    private fun styleLabel(configuration: AmbilightConfiguration?): String =
+        configuration?.stringValue
+            ?: listOfNotNull(configuration?.styleName, configuration?.menuSetting)
+                .joinToString(", ") { it.lowercase().replace('_', ' ') }
+                .ifEmpty { "unknown" }
 
     /** Pairs again with the same TV. The old pairing stays stored until the new one succeeds. */
     override fun rePair() = launchExclusive {
