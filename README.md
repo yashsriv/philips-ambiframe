@@ -46,4 +46,4 @@ with platform 36.
 
 ## Status
 
-Being built in steps. See the plan in the commit history.
+Being built in steps; see [docs/PLAN.md](docs/PLAN.md). Done: step 1 (repo) and step 2 (Gradle + app skeleton).
