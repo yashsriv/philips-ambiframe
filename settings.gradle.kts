@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "phillips-hue-frame"
+rootProject.name = "philips-ambiframe"
 include(":app")

@@ -4,7 +4,7 @@
     <application>
         <!--
             Debug-only art preview, started over adb:
-            adb shell am start -n com.ambiframe.tv/.art.debug.ArtPreviewActivity
+            adb shell am start -n org.yashsriv.ambiframe/.art.debug.ArtPreviewActivity
         -->
         <activity
             android:name=".art.debug.ArtPreviewActivity"

@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.ambiframe.tv"
+    namespace = "org.yashsriv.ambiframe"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.ambiframe.tv"
+        applicationId = "org.yashsriv.ambiframe"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

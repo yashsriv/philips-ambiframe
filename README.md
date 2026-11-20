@@ -68,7 +68,7 @@ with platform 36.
    third-party screensavers), use adb:
 
    ```sh
-   adb shell settings put secure screensaver_components com.ambiframe.tv/.dream.ArtDreamService
+   adb shell settings put secure screensaver_components org.yashsriv.ambiframe/.dream.ArtDreamService
    ```
 
 5. Start it right away to test it:
@@ -82,4 +82,4 @@ with platform 36.
 - **Logs:** `adb logcat -s AmbiFrame AmbiFrameDream AmbiFrameArt`. The TV's log
   buffer is small and busy, so stream it rather than reading it afterwards.
 - **Debug art preview** (debug builds only), with source stats on screen:
-  `adb shell am start -n com.ambiframe.tv/.art.debug.ArtPreviewActivity`
+  `adb shell am start -n org.yashsriv.ambiframe/.art.debug.ArtPreviewActivity`

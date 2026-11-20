@@ -28,7 +28,7 @@ Decisions made: art defaults to the **Art Institute of Chicago API (Impressionis
 
 **2. Gradle + app skeleton**
 - `settings.gradle.kts`, root `build.gradle.kts`, `gradle/libs.versions.toml`, Gradle wrapper. Generate the wrapper with a local `gradle wrapper`; if Gradle isn't installed, ask before downloading the official wrapper.
-- Single `:app` module, package `com.ambiframe.tv` (placeholder, easy to rename), minSdk 26 (Android TV 8, the floor for Philips Android TVs), targetSdk latest.
+- Single `:app` module, package `org.yashsriv.ambiframe`, minSdk 26 (Android TV 8, the floor for Philips Android TVs), targetSdk latest.
 - Manifest:
   - `android.software.leanback` required, touchscreen not required.
   - `INTERNET` and `ACCESS_NETWORK_STATE` permissions.
@@ -96,7 +96,7 @@ Decisions made: art defaults to the **Art Institute of Chicago API (Impressionis
 **8. Settings & polish**
 - Settings for slide interval, attribution on/off and art sources (AIC on; Google Arts & Culture off by default). A "Preview screensaver" button.
 - Instructions for making this the active screensaver. On Google TV and newer firmware, third-party screensavers are hidden from Settings, so the README and setup screen show:
-  `adb shell settings put secure screensaver_components com.ambiframe.tv/.dream.ArtDreamService`
+  `adb shell settings put secure screensaver_components org.yashsriv.ambiframe/.dream.ArtDreamService`
 - App icon/banner, README update.
 
 **Parallelism:** after step 2, the Ambilight track (steps 3→4) and the Art track (step 5) are independent and touch separate packages. Steps 6–8 need both.
