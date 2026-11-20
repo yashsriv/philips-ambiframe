@@ -50,8 +50,12 @@ private fun expandComponent(name: String): String {
     return if (cls.startsWith('.')) "$pkg/$pkg$cls" else name
 }
 
-/** The slide intervals offered in settings, shortest first. */
-val SLIDE_INTERVALS: List<Duration> = listOf(15.seconds, 30.seconds, 1.minutes, 2.minutes, 5.minutes, 10.minutes, 30.minutes)
+/**
+ * The slide intervals offered in settings, shortest first. Philips OLEDs show their logo
+ * screensaver after about 2 minutes of a still picture, so anything shorter keeps it away.
+ */
+val SLIDE_INTERVALS: List<Duration> =
+    listOf(15.seconds, 30.seconds, 1.minutes, 90.seconds, 2.minutes, 5.minutes, 10.minutes, 30.minutes)
 
 /** The next option after [current], wrapping round; an unlisted value moves to the default (1 min). */
 internal fun nextInterval(current: Duration): Duration {
@@ -60,7 +64,7 @@ internal fun nextInterval(current: Duration): Duration {
 }
 
 internal fun intervalLabel(interval: Duration): String = when {
-    interval < 1.minutes -> "${interval.inWholeSeconds} seconds"
+    interval < 1.minutes || interval.inWholeSeconds % 60 != 0L -> "${interval.inWholeSeconds} seconds"
     interval == 1.minutes -> "1 minute"
     else -> "${interval.inWholeMinutes} minutes"
 }

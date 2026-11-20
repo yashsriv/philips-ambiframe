@@ -36,7 +36,9 @@ for how it was built.
 Open **AmbiFrame** from the TV's launcher. The settings screen has:
 
 - **Preview screensaver**: runs it now, Ambilight included.
-- **Time per picture**: 15 seconds to 30 minutes (default 1 minute).
+- **Time per picture**: 15 seconds to 30 minutes (default 1 minute). On Philips
+  OLEDs keep it at 90 seconds or less, so the TV's logo screensaver (below)
+  never sees a still picture for 2 minutes.
 - **Show credits**: the title, artist and museum line.
 - **Google Arts & Culture**: adds the unofficial feed.
 - **Ambilight setup**: pair with the TV, test Ambilight off/on, or forget it.
@@ -79,6 +81,16 @@ with platform 36.
 - **Pairing shows no PIN:** on some Philips TVs the PIN toast comes from
   `org.droidtv.tvsystemui`. If that app isn't allowed to draw over other apps,
   the PIN is invisible. Allow it, or read the PIN from `adb logcat`.
+- **A bouncing Philips logo appears instead:** Philips OLEDs show it after about
+  2 minutes of a still picture (burn-in protection in `org.droidtv.tvsystemui`).
+  Make the screensaver start sooner than that. The TV's menu doesn't offer
+  times under 5 minutes, and "Never" is stored as 604800000, but adb can set
+  any value (here 90 seconds):
+
+  ```sh
+  adb shell settings put system screen_off_timeout 90000
+  ```
+
 - **Logs:** `adb logcat -s AmbiFrame AmbiFrameDream AmbiFrameArt`. The TV's log
   buffer is small and busy, so stream it rather than reading it afterwards.
 - **Debug art preview** (debug builds only), with source stats on screen:

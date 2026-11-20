@@ -34,9 +34,11 @@ class ScreensaverStatusTest {
     @Test
     fun `intervals cycle round and unknown values reset to one minute`() {
         assertEquals(30.seconds, nextInterval(15.seconds))
+        assertEquals(90.seconds, nextInterval(1.minutes))
+        assertEquals(2.minutes, nextInterval(90.seconds))
         assertEquals(15.seconds, nextInterval(30.minutes))
         assertEquals(1.minutes, nextInterval(42.seconds))
-        assertEquals(listOf("15 seconds", "1 minute", "10 minutes"),
-            listOf(intervalLabel(15.seconds), intervalLabel(1.minutes), intervalLabel(10.minutes)))
+        assertEquals(listOf("15 seconds", "1 minute", "90 seconds", "2 minutes", "10 minutes"),
+            listOf(15.seconds, 1.minutes, 90.seconds, 2.minutes, 10.minutes).map(::intervalLabel))
     }
 }
