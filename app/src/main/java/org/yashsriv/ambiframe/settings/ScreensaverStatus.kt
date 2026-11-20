@@ -63,6 +63,17 @@ internal fun nextInterval(current: Duration): Duration {
     return if (index < 0) 1.minutes else SLIDE_INTERVALS[(index + 1) % SLIDE_INTERVALS.size]
 }
 
+/** How much the art can be dimmed, in percent; 0 is off. */
+val DIM_LEVELS: List<Int> = listOf(0, 20, 40, 60)
+
+/** The next dim level after [current], wrapping round; an unlisted value turns dimming off. */
+internal fun nextDim(current: Int): Int {
+    val index = DIM_LEVELS.indexOf(current)
+    return if (index < 0) 0 else DIM_LEVELS[(index + 1) % DIM_LEVELS.size]
+}
+
+internal fun dimLabel(percent: Int): String = if (percent <= 0) "Off" else "$percent% darker"
+
 internal fun intervalLabel(interval: Duration): String = when {
     interval < 1.minutes || interval.inWholeSeconds % 60 != 0L -> "${interval.inWholeSeconds} seconds"
     interval == 1.minutes -> "1 minute"

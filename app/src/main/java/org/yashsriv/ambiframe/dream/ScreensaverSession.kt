@@ -29,11 +29,12 @@ class ScreensaverSession(context: Context, private val scope: CoroutineScope) {
     private val settings = DreamSettings(this.context)
     private val guard = AmbilightGuard.get(this.context)
     private val showAttribution = settings.showAttribution
+    private val dim = settings.dimPercent / 100f
     private var slide by mutableStateOf<Slide?>(null)
     private var loop: Job? = null
 
     @Composable
-    fun Content() = ArtFrame(slide, showAttribution)
+    fun Content() = ArtFrame(slide, showAttribution, dim = dim)
 
     fun start() {
         if (loop != null) return

@@ -19,6 +19,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -41,9 +42,12 @@ class Slide(val work: Artwork, val bitmap: ImageBitmap)
  * Everything drifts by a few pixels over several minutes and the image is scaled up slightly so the
  * drift never shows an edge. That keeps static content, the attribution text especially, from
  * sitting on the same pixels for hours on OLED panels.
+ *
+ * [dim] (0–1) darkens the art, not the credit, by drawing black over it at that opacity. On OLED
+ * panels power use and wear follow pixel brightness, so this saves both.
  */
 @Composable
-fun ArtFrame(slide: Slide?, showAttribution: Boolean, modifier: Modifier = Modifier) {
+fun ArtFrame(slide: Slide?, showAttribution: Boolean, modifier: Modifier = Modifier, dim: Float = 0f) {
     val drift = rememberInfiniteTransition(label = "burn-in drift")
     val dx by drift.animateFloat(
         initialValue = -1f, targetValue = 1f, label = "dx",
@@ -76,6 +80,10 @@ fun ArtFrame(slide: Slide?, showAttribution: Boolean, modifier: Modifier = Modif
                             scaleY = DRIFT_SCALE
                             translationX = dx * driftPx
                             translationY = dy * driftPx
+                        }
+                        .drawWithContent {
+                            drawContent()
+                            if (dim > 0f) drawRect(Color.Black.copy(alpha = dim.coerceAtMost(1f)))
                         },
                 )
                 if (showAttribution) {

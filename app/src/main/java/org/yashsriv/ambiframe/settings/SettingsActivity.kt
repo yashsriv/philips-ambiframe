@@ -46,6 +46,7 @@ class SettingsActivity : ComponentActivity(), SettingsActions {
         state = state.copy(
             interval = dreamSettings.slideInterval,
             showAttribution = dreamSettings.showAttribution,
+            dimPercent = dreamSettings.dimPercent,
             googleArtsCulture = artSettings.googleArtsCultureEnabled,
             screensaver = readScreensaverStatus(this),
         )
@@ -66,6 +67,11 @@ class SettingsActivity : ComponentActivity(), SettingsActions {
     override fun toggleAttribution() {
         dreamSettings.showAttribution = !dreamSettings.showAttribution
         state = state.copy(showAttribution = dreamSettings.showAttribution)
+    }
+
+    override fun cycleDim() {
+        dreamSettings.dimPercent = nextDim(dreamSettings.dimPercent)
+        state = state.copy(dimPercent = dreamSettings.dimPercent)
     }
 
     override fun toggleGoogleArtsCulture() {

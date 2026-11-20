@@ -40,6 +40,8 @@ Open **AmbiFrame** from the TV's launcher. The settings screen has:
   OLEDs keep it at 90 seconds or less, so the TV's logo screensaver (below)
   never sees a still picture for 2 minutes.
 - **Show credits**: the title, artist and museum line.
+- **Dim pictures**: off, or 20/40/60% darker. On OLED TVs power use and wear
+  follow pixel brightness, so dimming saves both.
 - **Google Arts & Culture**: adds the unofficial feed.
 - **Ambilight setup**: pair with the TV, test Ambilight off/on, or forget it.
 - **TV screensaver settings**: the system screen for choosing a screensaver.

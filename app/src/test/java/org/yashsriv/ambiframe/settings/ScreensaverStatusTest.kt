@@ -32,6 +32,13 @@ class ScreensaverStatusTest {
     }
 
     @Test
+    fun `dim levels cycle round and unknown values turn dimming off`() {
+        assertEquals(listOf(20, 40, 60, 0), listOf(0, 20, 40, 60).map(::nextDim))
+        assertEquals(0, nextDim(35))
+        assertEquals(listOf("Off", "40% darker"), listOf(dimLabel(0), dimLabel(40)))
+    }
+
+    @Test
     fun `intervals cycle round and unknown values reset to one minute`() {
         assertEquals(30.seconds, nextInterval(15.seconds))
         assertEquals(90.seconds, nextInterval(1.minutes))

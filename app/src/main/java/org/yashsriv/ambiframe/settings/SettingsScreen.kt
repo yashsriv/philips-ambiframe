@@ -28,6 +28,7 @@ data class PairingSummary(val tvName: String?, val host: String)
 data class SettingsState(
     val interval: Duration = 1.minutes,
     val showAttribution: Boolean = true,
+    val dimPercent: Int = 0,
     val googleArtsCulture: Boolean = false,
     val screensaver: ScreensaverStatus = ScreensaverStatus.Unknown,
     val pairing: PairingSummary? = null,
@@ -39,6 +40,7 @@ internal interface SettingsActions {
     fun preview()
     fun cycleInterval()
     fun toggleAttribution()
+    fun cycleDim()
     fun toggleGoogleArtsCulture()
     fun openAmbilightSetup()
     fun openSystemScreensaverSettings()
@@ -137,6 +139,14 @@ private fun OptionsColumn(state: SettingsState, actions: SettingsActions, modifi
                 "Title, artist and museum, small in the bottom-right corner",
                 onClick = actions::toggleAttribution,
                 trailing = { Switch(checked = state.showAttribution, onCheckedChange = null) },
+            )
+        }
+        item {
+            Option(
+                "Dim pictures",
+                if (state.dimPercent > 0) "${dimLabel(state.dimPercent)}. Saves power and panel wear on OLED TVs."
+                else "Off. Darkening the art saves power and panel wear on OLED TVs.",
+                onClick = actions::cycleDim,
             )
         }
         item {
