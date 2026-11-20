@@ -62,7 +62,7 @@ Decisions made: art defaults to the **Art Institute of Chicago API (Impressionis
 
 **5. Art source** (`art/` package)
 - `ArtProvider` interface. Each work is an `Artwork(id, imageUrl, width?, height?, title, artist, date, credit, source)`.
-- **Landscape-only rule (all providers):** keep a work only if its aspect ratio is between **1.6 and 2.0**. The screen is 16:9 (1.78), so the image fills it with `ContentScale.Crop` and loses at most about 11% at the edges. When a provider gives no size, the image is probed: Coil decodes the bounds and rejected works go on a cached reject list.
+- **Landscape-only rule (all providers):** keep a work only if its aspect ratio is between **1.33 (4:3) and 2.0**. The screen is 16:9 (1.78), so the image fills it with `ContentScale.Crop`. At most about 25% of the height (at 4:3) or 11% of the width (at 2.0) is cut off. The bound was lowered from 1.6, which left only 15 AIC works; 1.33 gives 69 AIC and 213 Google works. When a provider gives no size, the image header is probed over HTTP and the measured size is cached by ID, so rejected works aren't probed again and the bounds can change without clearing the cache.
 - **`ArtInstituteProvider` (default):** `POST https://api.artic.edu/api/v1/artworks/search` with an Elasticsearch body:
   - `bool.must`: `is_public_domain = true`, `exists image_id`, and `terms style_id` ∈ {Impressionism, Post-Impressionism}.
   - `fields=id,title,artist_display,date_display,image_id,thumbnail,credit_line`.

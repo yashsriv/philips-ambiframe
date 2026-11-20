@@ -9,13 +9,15 @@ import org.junit.Test
 
 class LandscapeRuleTest {
     @Test
-    fun acceptsOnlyAspectRatiosFrom1_6To2_0() {
+    fun acceptsOnlyAspectRatiosFrom4_3To2_0() {
         assertTrue(LandscapeRule.accepts(1920, 1080)) // 1.78
-        assertTrue(LandscapeRule.accepts(1600, 1000)) // 1.6, inclusive
+        assertTrue(LandscapeRule.accepts(1600, 1000)) // 1.6
+        assertTrue(LandscapeRule.accepts(4000, 3000)) // 4:3, inclusive
+        assertTrue(LandscapeRule.accepts(1330, 1000)) // 1.33, inclusive
         assertTrue(LandscapeRule.accepts(2000, 1000)) // 2.0, inclusive
-        assertFalse(LandscapeRule.accepts(1599, 1000))
+        assertFalse(LandscapeRule.accepts(1329, 1000))
         assertFalse(LandscapeRule.accepts(2001, 1000))
-        assertFalse(LandscapeRule.accepts(4000, 3000)) // 4:3
+        assertFalse(LandscapeRule.accepts(5000, 4000)) // 5:4
         assertFalse(LandscapeRule.accepts(1080, 1920)) // portrait
         assertFalse(LandscapeRule.accepts(0, 0))
     }
@@ -56,9 +58,11 @@ class LandscapeGateTest {
 
         assertEquals(listOf("wide"), kept.map { it.id })
         assertEquals(1800, kept.single().width) // measured size is filled in
-        assertEquals(setOf("square"), cache.results.rejected)
-        assertEquals(ImageSizeEntry(1800, 1000), cache.results.accepted["wide"])
-        assertFalse("failed probes are not cached", "broken" in cache.results.rejected)
+        assertEquals(
+            "sizes are cached for rejected works too; failed probes are not cached",
+            mapOf("wide" to ImageSizeEntry(1800, 1000), "square" to ImageSizeEntry(1000, 1000)),
+            cache.results.sizes,
+        )
     }
 
     @Test
@@ -70,5 +74,15 @@ class LandscapeGateTest {
 
         assertEquals(listOf("wide"), kept.map { it.id })
         assertEquals("only the failed probe is retried", listOf("probe:broken"), probe.probed)
+    }
+
+    @Test
+    fun cachedSizesAreJudgedByTheCurrentRule() = runTest {
+        // Cached under earlier, stricter bounds: 1.5 would have been rejected at 1.6.
+        cache.results = ProbeResults(mapOf("old" to ImageSizeEntry(1500, 1000)))
+        val kept = gate.filter(listOf(artwork("old", width = null, height = null)), probeUrl)
+
+        assertEquals(listOf("old"), kept.map { it.id })
+        assertTrue(probe.probed.isEmpty())
     }
 }

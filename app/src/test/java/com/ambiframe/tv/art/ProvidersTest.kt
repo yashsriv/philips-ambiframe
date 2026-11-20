@@ -180,6 +180,6 @@ class GoogleArtsCultureProviderTest {
         val kept = gate.filter(provider.fetch(), provider::probeUrl)
 
         assertEquals(listOf("gac:wide"), kept.map { it.id })
-        assertEquals(setOf("gac:tall"), cache.results.rejected)
+        assertEquals(ImageSizeEntry(171, 256), cache.results.sizes["gac:tall"])
     }
 }

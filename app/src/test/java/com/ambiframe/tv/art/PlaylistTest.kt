@@ -229,7 +229,7 @@ class FileStoresTest {
     @Test
     fun probeCacheRoundTripsAndToleratesCorruption() = runTest {
         val file = tmp.root.resolve("probe.json")
-        val results = ProbeResults(setOf("gac:tall"), mapOf("gac:wide" to ImageSizeEntry(1800, 1000)))
+        val results = ProbeResults(mapOf("gac:tall" to ImageSizeEntry(171, 256), "gac:wide" to ImageSizeEntry(1800, 1000)))
         FileProbeCache(file).save(results)
         assertEquals(results, FileProbeCache(file).load())
 
