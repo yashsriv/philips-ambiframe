@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+            Debug-only art preview, started over adb:
+            adb shell am start -n com.ambiframe.tv/.art.debug.ArtPreviewActivity
+        -->
+        <activity
+            android:name=".art.debug.ArtPreviewActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AmbiFrame" />
+    </application>
+</manifest>
