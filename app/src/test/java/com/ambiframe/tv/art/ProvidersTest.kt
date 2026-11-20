@@ -63,7 +63,7 @@ class ArtInstituteProviderTest {
         val must = body["query"]!!.jsonObject["bool"]!!.jsonObject["must"]!!.jsonArray.toString()
         assertTrue(must, "\"is_public_domain\":true" in must)
         assertTrue(must, "{\"exists\":{\"field\":\"image_id\"}}" in must)
-        assertTrue(must, "\"style_id\":[\"TM-7543\",\"TM-7547\"]" in must)
+        assertTrue(must, "\"style_id\":[\"TM-7543\",\"TM-7547\",\"TM-7630\",\"TM-16386\"]" in must)
         assertEquals(
             ArtInstituteProvider.FIELDS,
             body["fields"]!!.jsonArray.map { it.jsonPrimitive.content },

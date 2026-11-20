@@ -57,7 +57,7 @@ class ArtInstituteProvider(
         }
     }
 
-    /** Elasticsearch query: public domain, has an image, style is Impressionism or Post-Impressionism. */
+    /** Elasticsearch query: public domain, has an image, style is one of [STYLE_IDS]. */
     internal fun searchBody(page: Int) = buildJsonObject {
         putJsonObject("query") {
             putJsonObject("bool") {
@@ -124,12 +124,23 @@ class ArtInstituteProvider(
         const val MUSEUM = "The Art Institute of Chicago"
 
         /**
-         * Style category terms, looked up on 2026-11-20 via
-         * `/api/v1/category-terms/search?q=Impressionism` and `?q=Post-Impressionism` (subtype `style`).
+         * Style category terms (subtype `style`), looked up on 2026-11-20 via
+         * `/api/v1/category-terms/search?q=…`.
+         *
+         * On that date Neo-Impressionism was the style of no works and American Impressionism of one
+         * (not public domain), so those two add nothing yet. They're kept so works AIC tags later
+         * are picked up.
          */
         const val STYLE_IMPRESSIONISM = "TM-7543"
         const val STYLE_POST_IMPRESSIONISM = "TM-7547"
-        val STYLE_IDS = listOf(STYLE_IMPRESSIONISM, STYLE_POST_IMPRESSIONISM)
+        const val STYLE_NEO_IMPRESSIONISM = "TM-7630"
+        const val STYLE_AMERICAN_IMPRESSIONISM = "TM-16386"
+        val STYLE_IDS = listOf(
+            STYLE_IMPRESSIONISM,
+            STYLE_POST_IMPRESSIONISM,
+            STYLE_NEO_IMPRESSIONISM,
+            STYLE_AMERICAN_IMPRESSIONISM,
+        )
 
         val FIELDS = listOf(
             "id", "title", "artist_display", "date_display", "image_id", "thumbnail", "credit_line",
